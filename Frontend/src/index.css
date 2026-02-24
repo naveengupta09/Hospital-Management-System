@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Literata:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap");
+
+:root {
+	color-scheme: light;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: "Literata", serif;
+	background: #f5fbf8;
+	color: #0f2e25;
+}
+
+.ui-sans {
+	font-family: "Source Sans 3", sans-serif;
+}
+
+.bg-grid {
+	background-image: linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+	background-size: 28px 28px;
+}
