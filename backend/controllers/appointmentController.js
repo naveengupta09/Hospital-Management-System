@@ -594,11 +594,7 @@ export const getStats = async (req, res) => {
 export const getAppointmentsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-    if (!doctorId)
-      return res.status(400).json({
-        success: false,
-        message: "Missing doctorId parameter",
-      });
+    if (!doctorId)  return res.status(400).json({ success: false, message: "Missing doctorId parameter", });
 
     const { mobile, status, search = "", limit: limitRaw = 50, page: pageRaw = 1, } = req.query;
     const limit = Math.min(200, Math.max(1, parseInt(limitRaw, 10) || 50));
