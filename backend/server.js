@@ -7,6 +7,7 @@ import { connectDB } from './config/db.js';
 import doctorRouter from './routes/doctorRouter.js';
 import serviceRouter from './routes/serviceRouter.js';
 import appointmentRouter from './routes/appointmentRouter.js';
+import serviceAppointmentsRouter from './routes/serviceAppointmentsRouter.js';
 
 const app = express();
 const PORT = 4000;

@@ -1,5 +1,5 @@
-import Service from "../models/Service";
-import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary";
+import Service from "../models/Service.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // Helper function
 

@@ -1,7 +1,7 @@
 // assets/dummyStyles.js
 export const doctorDetailStyles = {
   // Layout styles
-  pageContainer: "min-h- font-serif bg-linear-to-br from-emerald-50 via-white to-green-50 p-4 sm:p-6",
+  pageContainer: "min-h-screen font-serif bg-linear-to-br from-emerald-50 via-white to-green-50 p-4 sm:p-6",
   maxWidthContainer: "max-w-4xl mx-auto",
   maxWidthContainerLg: "max-w-6xl mx-auto",
   maxWidthContainerXL: "max-w-9xl",
@@ -114,7 +114,7 @@ export const pageStyles = {
   
   statusBadge: "text-xs px-3 py-1 rounded-full",
   
-  cancelButton: (isDisabled, isCompleted) => 
+  cancelButton: (isDisabled) => 
     `px-3 py-2 cursor-pointer rounded-full text-sm flex items-center gap-2 transition ${
       isDisabled
         ? "bg-rose-50 text-rose-400 opacity-60 cursor-not-allowed"
@@ -501,7 +501,7 @@ export const navbarStyles = {
   logoSubtext: "text-xs xl:block text-gray-500",
   
   // Center navigation (desktop)
-  centerNavContainer: "hidden lg:flex items-center justify-center relative",
+  centerNavContainer: "flex items-center justify-center relative",
   glowEffect: "glow relative rounded-3xl p-1 bg-linear-to-r from-emerald-100 via-emerald-200 to-emerald-100",
   centerNavInner: "relative flex items-center",
   centerNavScrollContainer: "center-inner relative whitespace-nowrap rounded-3xl bg-white/95 lg:px-2 px-4 py-2 flex items-center gap-2 shadow-lg border border-gray-100 overflow-x-auto",
@@ -513,7 +513,7 @@ export const navbarStyles = {
   
   // Right section styles
   rightContainer: "flex items-center gap-3",
-  signOutButton: "hidden lg:mx-1 lg:text-xs whitespace-nowrap xl:mx-1 lg:-mr-6 xl:mr-5 lg:flex px-4 py-2 cursor-pointer rounded-full bg-amber-500 text-white text-sm items-center gap-2 shadow-sm",
+  signOutButton: "mx-1 text-xs whitespace-nowrap xl:mx-1 xl:mr-5 inline-flex px-4 py-2 cursor-pointer rounded-full bg-amber-500 text-white text-sm items-center gap-2 shadow-sm",
   loginButton: "px-3 py-2 cursor-pointer rounded-full border bg-white text-emerald-600 text-sm shadow-sm",
   
   // Mobile menu button
