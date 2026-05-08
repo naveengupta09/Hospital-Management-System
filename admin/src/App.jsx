@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import Home from "./pages/Home";
 import Add from "./pages/Add";
 import Appointments from "./pages/Appointments";
+import ListService from "./components/ListServicePage";
 
 function RequireAuth({ children }) {
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
@@ -67,6 +68,23 @@ const App = () => {
           </RequireAuth>
         }
       />
+      <Route
+        path="/add-service"
+        element={
+          <RequireAuth>
+            <AddSer />
+          </RequireAuth>
+        }/>
+        <Route path="/list-service" element={
+          <RequireAuth>
+            <ListService />
+          </RequireAuth>
+        }/>
+        <Route path="/service-appointments" element={<RequireAuth>
+          <ServiceAppointmentsPage />
+          </RequireAuth>
+        }
+        />
     </Routes>
   );
 };
