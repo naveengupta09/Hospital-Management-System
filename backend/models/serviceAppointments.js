@@ -121,7 +121,6 @@ const serviceAppointmentSchema = new mongoose.Schema({
     sessionId: {
       type: String, // stripe checkout session id
       default: "",
-      index: true,
     },
 
     meta: {
@@ -137,6 +136,6 @@ serviceAppointmentSchema.index({ date: 1, status: 1 });
 serviceAppointmentSchema.index({ serviceId: 1 });
 serviceAppointmentSchema.index({ "payment.sessionId": 1 });
 
-const ServiceAppointment = mongoose.model.ServiceAppointment || mongoose.model("ServiceAppointment", serviceAppointmentSchema);
+const ServiceAppointment = mongoose.models.ServiceAppointment || mongoose.model("ServiceAppointment", serviceAppointmentSchema);
 
 export default ServiceAppointment;

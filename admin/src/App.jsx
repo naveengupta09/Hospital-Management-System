@@ -4,8 +4,11 @@ import Hero from "./pages/Hero";
 import { Link } from "react-router-dom";
 import Home from "./pages/Home";
 import Add from "./pages/Add";
+import AddSer from "./pages/AddSer";
 import Appointments from "./pages/Appointments";
 import ListService from "./components/ListServicePage";
+import SerDashboard from "./pages/SerDashboard";
+import ServiceAppointmentsPage from "./components/ServiceAppointmentsPage";
 
 function RequireAuth({ children }) {
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);

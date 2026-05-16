@@ -3,6 +3,7 @@ import { addServiceStyles } from "../assets/dummyStyles";
 import {
   AlertTriangle,
   Calendar,
+  ImageIcon,
   Check,
   CheckCircle,
   Clock,
@@ -435,7 +436,7 @@ const AddService = ({ serviceId }) => {
                   />
                 ) : (
                   <div className={addServiceStyles.imageUpload.placeholder}>
-                    <Image className="w-10 h-10" />
+                    <ImageIcon className="w-10 h-10" />
                     <div className="mt-2 text-sm">Service image (required)</div>
                   </div>
                 )}
@@ -454,7 +455,7 @@ const AddService = ({ serviceId }) => {
                   className={addServiceStyles.buttons.uploadImage}
                 >
                   <Plus className="w-4 h-4" />{" "}
-                  {imgagePreview ? "Change Image" : "Upload Image"}
+                  {imagePreview ? "Change Image" : "Upload Image"}
                 </button>
                 {(imagePreview || hasExistingImage) && (
                   <button

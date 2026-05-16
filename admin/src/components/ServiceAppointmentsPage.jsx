@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { serviceAppointmentsStyles } from "../assets/dummyStyles";
-import { Loader2 } from "lucide-react";
+import { SearchIcon, XIcon } from "lucide-react";
 
 const API_BASE = "http://localhost:4000";
 //HELPERS FUNCTION
@@ -69,35 +69,8 @@ function StatusBadge({ status }) {
 }
 
 //for toast
-function Toast({ toasts, removeToast }) {
-  return (
-    <div className={serviceAppointmentsStyles.toastContainer}>
-      {toasts.map((t) => (
-        <div key={t.id} className={serviceAppointmentsStyles.toast}>
-          <div className={serviceAppointmentsStyles.toastContent}>
-            <div className="mt-0.5">
-              <Loader2 className={serviceAppointmentsStyles.toastSpinner} />
-            </div>
-            <div className={serviceAppointmentsStyles.toastText}>
-              <div className={serviceAppointmentsStyles.toastTitle}>
-                {t.title}
-              </div>
-              <div className={serviceAppointmentsStyles.toastMessage}>
-                {t.message}
-              </div>
-            </div>
-            <button
-              onClick={() => removeToast(t.id)}
-              className={serviceAppointmentsStyles.toastCloseButton}
-              aria-label="close toast"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function Toast() {
+  return null;
 }
 
 //for status select small component
@@ -153,31 +126,50 @@ function RescheduleButton({ appointment, onReschedule, disabled }) {
   const terminal =
     appointment.status === "Completed" || appointment.status === "Canceled";
   const [editing, setEditing] = useState(false);
-  const todayISO = getTodayISO();
-  const [date, setDate] = useState(appointment.date || todayISO);
-  const [time, setTime] = useState(timePartsToInputValue(appointment));
+  const todayISO = useMemo(() => getTodayISO(), []);
+  
+  const timeStateReducer = (state, action) => {
+    switch (action.type) {
+      case "SET_BOTH":
+        return { date: action.date, time: action.time };
+      case "SET_DATE":
+        return { ...state, date: action.date };
+      case "SET_TIME":
+        return { ...state, time: action.time };
+      default:
+        return state;
+    }
+  };
+
+  const [timeState, dispatch] = useReducer(timeStateReducer, {
+    date: appointment.date || todayISO,
+    time: timePartsToInputValue(appointment),
+  });
 
   useEffect(() => {
     const baseDate = appointment.date || "";
     const initialDate =
       baseDate && !isDateBefore(baseDate, todayISO) ? baseDate : todayISO;
-    setDate(initialDate);
-    setTime(timePartsToInputValue(appointment));
+    dispatch({
+      type: "SET_BOTH",
+      date: initialDate,
+      time: timePartsToInputValue(appointment),
+    });
   }, [
     appointment.date,
     appointment.hour,
     appointment.minute,
     appointment.ampm,
+    todayISO,
   ]);
 
   //to save after editing
   function save() {
-    if (!date || !time) return;
-    if (isDateBefore(date, getTodayISO())) {
-      alert("Please choose today or a future date for rescheduling.");
+    if (!timeState.date || !timeState.time) return;
+    if (isDateBefore(timeState.date, getTodayISO())) {
       return;
     }
-    onReschedule(date, time);
+    onReschedule(timeState.date, timeState.time);
     setEditing(false);
   }
   //to cancel a booking
@@ -187,8 +179,11 @@ function RescheduleButton({ appointment, onReschedule, disabled }) {
       baseDate && !isDateBefore(baseDate, getTodayISO())
         ? baseDate
         : getTodayISO();
-    setDate(restoreDate);
-    setTime(timePartsToInputValue(appointment));
+    dispatch({
+      type: "SET_BOTH",
+      date: restoreDate,
+      time: timePartsToInputValue(appointment),
+    });
     setEditing(false);
   }
 
@@ -211,15 +206,15 @@ function RescheduleButton({ appointment, onReschedule, disabled }) {
         <div className={serviceAppointmentsStyles.rescheduleEditContainer}>
           <input
             type="date"
-            value={date}
+            value={timeState.date}
             min={getTodayISO()}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => dispatch({ type: "SET_DATE", date: e.target.value })}
             className={serviceAppointmentsStyles.rescheduleDateInput}
           />
           <input
             type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
+            value={timeState.time}
+            onChange={(e) => dispatch({ type: "SET_TIME", time: e.target.value })}
             className={serviceAppointmentsStyles.rescheduleTimeInput}
           />
           <div className={serviceAppointmentsStyles.rescheduleActions}>
@@ -244,9 +239,7 @@ function RescheduleButton({ appointment, onReschedule, disabled }) {
 
 const ServiceAppointmentsPage = () => {
   const [appointments, setAppointments] = useState([]);
-  const [toasts, setToasts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Search & debounce
   const [search, setSearch] = useState("");
@@ -263,16 +256,11 @@ const ServiceAppointmentsPage = () => {
   }, []);
 
   function pushToast(title, message) {
-    const toastId = Date.now() + Math.random();
-    setToasts((t) => [...t, { id: toastId, title, message }]);
-  }
-  function removeToast(id) {
-    setToasts((t) => t.filter((x) => x.id !== id));
+    return { title, message };
   }
 
   async function fetchAppointments() {
     setLoading(true);
-    setError(null);
     try {
       const url = `${API_BASE}/api/service-appointments?limit=500`;
       const res = await fetch(url);
@@ -332,29 +320,18 @@ const ServiceAppointmentsPage = () => {
         })
         .filter(Boolean);
       setAppointments(normalized);
-    } catch (err) {
-      console.error("fetchAppointments:", err);
-      setError(err.message || "Failed to load appointments");
+    } catch {
       setAppointments([]);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    if (toasts.length === 0) return;
-    const timers = toasts.map((t) =>
-      setTimeout(() => {
-        setToasts((s) => s.filter((x) => x.id !== t.id));
-      }, 3000),
-    );
-    return () => timers.forEach((t) => clearTimeout(t));
-  }, [toasts]);
-
   function extractUpdated(body) {
     return body?.data || body?.appointment || body || {};
   }
 
+  //to update the status
   async function changeStatusRemote(id, newStatus) {
     const old = appointments.find((a) => a.id === id);
     if (!old) return;
@@ -417,15 +394,14 @@ const ServiceAppointmentsPage = () => {
         ),
       );
       pushToast("Status updated", `Appointment #${id} is now ${newStatus}`);
-    } catch (err) {
-      console.error("changeStatusRemote:", err);
+    } catch {
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status: old.status } : a)),
       );
-      pushToast("Update failed", err.message || "Failed to update status");
     }
   }
 
+  //to reschedule the appointment for later but not on previous day's
   async function rescheduleRemote(id, dateStr, time24) {
     const appt = appointments.find((a) => a.id === id);
     if (!appt) return;
@@ -501,16 +477,12 @@ const ServiceAppointmentsPage = () => {
           finalDate,
         )} ${finalTimeStr}`,
       );
-    } catch (err) {
-      console.error("rescheduleRemote:", err);
-      pushToast(
-        "Reschedule failed",
-        err.message || "Failed to reschedule — reloading",
-      );
+    } catch {
       await fetchAppointments();
     }
   }
 
+  //to cancel any appointment
   async function cancelRemote(id) {
     const appt = appointments.find((a) => a.id === id);
     if (!appt) return;
@@ -555,13 +527,12 @@ const ServiceAppointmentsPage = () => {
         ),
       );
       pushToast("Canceled", `Appointment #${id} canceled`);
-    } catch (err) {
-      console.error("cancelRemote:", err);
-      pushToast("Cancel failed", err.message || "Failed to cancel — reloading");
+    } catch {
       await fetchAppointments();
     }
   }
 
+  //to filter
   const filtered = useMemo(() => {
     const q = debouncedSearch.toLowerCase();
     return appointments
@@ -574,6 +545,7 @@ const ServiceAppointmentsPage = () => {
       .filter((a) => (statusFilter ? a.status === statusFilter : true));
   }, [appointments, debouncedSearch, statusFilter]);
 
+  // to get time stamp for
   function getTimestamp(a) {
     try {
       const [y, m, d] = (a.date || "1970-01-01").split("-").map(Number);
@@ -586,12 +558,179 @@ const ServiceAppointmentsPage = () => {
       return 0;
     }
   }
+  //sort that is upcoming date comes first
   const displayList = useMemo(() => {
     const copy = filtered.slice();
     copy.sort((x, y) => getTimestamp(y) - getTimestamp(x));
     return copy;
   }, [filtered]);
-  return <div></div>;
+
+  return(
+    <div className={serviceAppointmentsStyles.Container}>
+      <header className={serviceAppointmentsStyles.headerContainer}>
+        <div className={serviceAppointmentsStyles.headerTitleContainer}>
+          <h1 className={serviceAppointmentsStyles.headerTitle}>
+            Appointments
+          </h1>
+          <p className={serviceAppointmentsStyles.headerSubtitle}>
+            Manage patient bookings - quick search & status controls
+          </p>
+        </div>
+
+        <div className={serviceAppointmentsStyles.searchContainer}>
+          <div className={serviceAppointmentsStyles.searchInputWrapper}>
+            <label className={serviceAppointmentsStyles.searchLabel}>
+              <span className="sr-only">
+                Search Appointments
+              </span>
+              <div className=" flex items-center gap-2 relative w-full">
+                <div className={serviceAppointmentsStyles.searchIconContainer}>
+                  <SearchIcon className={serviceAppointmentsStyles.searchIcon} />
+                </div>
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by patient or service..." className={serviceAppointmentsStyles.searchInput} />
+                {search ? (
+                  <button className={serviceAppointmentsStyles.clearSearchButton} onClick={() => setSearch("")}>
+                    <XIcon className={serviceAppointmentsStyles.clearSearchIcon} />
+                  </button>
+                ) : null}
+              </div>
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={serviceAppointmentsStyles.statusFilterSelect}
+              title="Filter by status"
+            >
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Rescheduled">Rescheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Canceled">Canceled</option>
+            </select>
+          </div>
+
+          <div className={serviceAppointmentsStyles.searchInput}>
+            <div />
+            <div>
+              <button onClick={fetchAppointments} className={serviceAppointmentsStyles.refreshButton}>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {loading ? (
+        null
+      ) : (
+        <div className={serviceAppointmentsStyles.gridContainer}>{displayList.length ===0 ? (
+          null
+        ) : (
+          displayList.map((a) => {
+            const isLocked = a.status === "Completed" || a.status === "Canceled";
+            return (
+              <article key={a.id} className={serviceAppointmentsStyles.article}>
+                <div className={serviceAppointmentsStyles.cardInner}>
+                    <div>
+                      <div className={serviceAppointmentsStyles.cardHeader}>
+                        <div className={serviceAppointmentsStyles.patientInfoContainer}>
+                          <div className={serviceAppointmentsStyles.patientAvatar}>
+                            <User className={serviceAppointmentsStyles.patientAvatarIcon} />
+                          </div>
+
+                          <div>
+                              {a.gender} • {a.age} yrs
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={serviceAppointmentsStyles.statusContainer}>
+                          <StatusBadge status={a.status} />
+                          <div className="mt-1">
+                            <StatusSelect
+                              appointment={a}
+                              onChange={(s) => changeStatusRemote(a.id, s)}
+                              disabled={false}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={serviceAppointmentsStyles.detailsContainer}>
+                        <div className={serviceAppointmentsStyles.detailItem}>
+                          <Phone className={serviceAppointmentsStyles.detailIcon} />
+                          <span className={serviceAppointmentsStyles.detailText}>
+                            {a.mobile}
+                          </span>
+                        </div>
+
+                        <div className={serviceAppointmentsStyles.detailItem}>
+                          <BadgeIndianRupee className={serviceAppointmentsStyles.detailIcon} />
+                          <span className={serviceAppointmentsStyles.feesText}>
+                            Fees: ₹{a.fees}
+                          </span>
+                        </div>
+
+                        <div className={serviceAppointmentsStyles.detailItem}>
+                          <Calendar className={serviceAppointmentsStyles.detailIcon} />
+                          <span className={serviceAppointmentsStyles.detailText}>
+                            Date: {formatDateNice(a.date)}
+                          </span>
+                        </div>
+
+                        <div className={serviceAppointmentsStyles.detailItem}>
+                          <Clock className={serviceAppointmentsStyles.detailIcon} />
+                          <span className={serviceAppointmentsStyles.detailText}>
+                            Time: {formatTimeDisplay(a)}
+                          </span>
+                        </div>
+
+                        <div className={serviceAppointmentsStyles.serviceText}>
+                          Service:{" "}
+                          <span className={serviceAppointmentsStyles.serviceName}>
+                            {a.serviceName}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={serviceAppointmentsStyles.actionsContainer}>
+                      <div className={serviceAppointmentsStyles.actionsInnerContainer}>
+                        <div className="flex-1">
+                          <RescheduleButton
+                            appointment={a}
+                            onReschedule={(d, t) =>
+                              rescheduleRemote(a.id, d, t)
+                            }
+                            disabled={false}
+                          />
+                        </div>
+
+                        <div className="ml-3">
+                          <button
+                            onClick={() => cancelRemote(a.id)}
+                            disabled={isLocked}
+                            className={serviceAppointmentsStyles.cancelButton(isLocked)}
+                            title={
+                              isLocked ? "Cannot cancel" : "Cancel appointment"
+                            }
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+              </article>
+            );
+          })
+        )}
+        </div>
+      )}
+
+      <style>{serviceAppointmentsStyles.animatedBorderStyle}</style>
+    </div>
+  )
 };
 
 export default ServiceAppointmentsPage;

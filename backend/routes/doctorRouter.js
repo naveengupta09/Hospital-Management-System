@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 
-import { createDoctorProfile, deleteDoctor, getDoctorById, getDoctors, toggleDoctorAvailability, updateDoctor } from '../controllers/doctorController.js';
+import { createDoctorProfile, deleteDoctor, getDoctorById, getDoctors, loginDoctor, toggleDoctorAvailability, updateDoctor } from '../controllers/doctorController.js';
 import doctorAuth from '../middlewares/doctorAuth.js';
 
 const upload = multer({ dest: "/temp"});
@@ -10,6 +10,7 @@ const doctorRouter = express.Router();
 
 doctorRouter.get("/", getDoctors);
 doctorRouter.get("/:id", getDoctorById);
+doctorRouter.post("/login", loginDoctor);
 doctorRouter.post("/", upload.single("image"), createDoctorProfile);
 
 // after login
